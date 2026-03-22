@@ -31,6 +31,14 @@
 #include "pins.h"
 #include "config.h"
 
+// 辅助宏：将宏参数转为字符串（用于 Serial 打印引脚号）
+#ifndef PDM_AUDIO_XSTR
+  #define PDM_AUDIO_XSTR(x) #x
+#endif
+#ifndef PDM_AUDIO_STR
+  #define PDM_AUDIO_STR(x)  PDM_AUDIO_XSTR(x)
+#endif
+
 class AudioOutputPDM : public AudioOutput {
 public:
     AudioOutputPDM() : tx_handle(nullptr), g_gain(1.0f) {}
@@ -77,7 +85,7 @@ public:
             return false;
         }
 
-        Serial.println("[PDM] PDM TX 初始化成功（GPIO " STR(PIN_PDM_OUT) "）");
+        Serial.println("[PDM] PDM TX 初始化成功（GPIO " PDM_AUDIO_STR(PIN_PDM_OUT) "）");
         return true;
     }
 
@@ -114,8 +122,4 @@ public:
 private:
     i2s_chan_handle_t tx_handle;
     float g_gain;
-
-    // 辅助宏：将宏参数转为字符串（用于 Serial 打印引脚号）
-    #define XSTR(x) #x
-    #define STR(x)  XSTR(x)
 };
