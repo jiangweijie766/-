@@ -1570,8 +1570,12 @@ const SongInfo *tags_find(const char *uidStr) {
 #include "config.h"
 
 // 辅助宏：将宏参数转为字符串（用于 Serial 打印引脚号）
-#define XSTR(x) #x
-#define STR(x)  XSTR(x)
+#ifndef XSTR
+  #define XSTR(x) #x
+#endif
+#ifndef STR
+  #define STR(x)  XSTR(x)
+#endif
 
 class AudioOutputPDM : public AudioOutput {
 public:
