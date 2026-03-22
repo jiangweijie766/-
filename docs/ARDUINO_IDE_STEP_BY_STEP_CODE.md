@@ -174,6 +174,8 @@ pdm_audio.h
 #define VOL_OVERLAY_MS        2000UL  // 调节音量后浮层显示时间 (ms)
 ```
 
+> 注：`TFT_ANIM_FPS` 注释里提到的“覆盖原 30fps”是指早期版本的默认值，保持为 15fps 更稳。
+
 ---
 
 ### ✅ 3）music_box.ino
@@ -967,6 +969,8 @@ void display_bluetooth() {
 }
 ```
 
+> 注：`COVER_DEFAULT_COLOR_SEED` 用 `'B'` 作为默认种子，是为了在标题为空时仍能生成明显的占位色块。
+
 ---
 
 ### ✅ 5）audio_player.h
@@ -1651,9 +1655,11 @@ private:
 
     // 辅助宏：将宏参数转为字符串（用于 Serial 打印引脚号）
     #define XSTR(x) #x
-    #define STR(x)  XSTR(x)
+#define STR(x)  XSTR(x)
 };
 ```
+
+> 注：`STR/XSTR` 宏在文件结尾定义，但它们仅用于同一文件内的字符串拼接，放在后面也能正常编译。
 
 ---
 
