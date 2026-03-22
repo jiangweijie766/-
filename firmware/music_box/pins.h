@@ -2,7 +2,8 @@
 
 // ============================================================
 //  ESP32-S3-DevKitC-1 引脚定义
-//  硬件：GC9A01 + PN532 + ZK-502C + PCM5102A + SD 卡
+//  硬件：GC9A01 + PN532 + ZK-502C + SD 卡
+//  音频输出：PCM5102A I2S DAC（推荐）或 PDM+RC 滤波（无模块方案）
 // ============================================================
 
 // ---------- GC9A01 圆形屏（SPI） ----------
@@ -23,10 +24,15 @@
 #define PIN_NFC_SDA    5
 #define PIN_NFC_SCL    6
 
-// ---------- PCM5102A I2S DAC ----------
-#define PIN_I2S_BCK   15   // 位时钟
-#define PIN_I2S_LRCK  16   // 左右声道时钟
-#define PIN_I2S_DATA  17   // 串行数据
+// ---------- PCM5102A I2S DAC（AUDIO_MODE_I2S_DAC 方案）----------
+#define PIN_I2S_BCK   15   // 位时钟 (BCLK)
+#define PIN_I2S_LRCK  16   // 左右声道时钟 (LRCK)
+#define PIN_I2S_DATA  17   // 串行数据 (DIN)
+
+// ---------- PDM 音频输出（AUDIO_MODE_PDM 方案，无需 DAC 模块）----------
+// GPIO 14 → 2级 RC 低通滤波器 → ZK-502C AUX 输入
+// RC 参数：R=1kΩ, C=10nF（2级），截止频率 ≈ 16kHz
+#define PIN_PDM_OUT   14
 
 // ---------- 音量旋转编码器（可选） ----------
 #define PIN_ENC_A     18

@@ -31,7 +31,7 @@ bool tags_load() {
         return false;
     }
 
-    DynamicJsonDocument doc(4096);
+    DynamicJsonDocument doc(JSON_DOC_SIZE_TAGS);
     DeserializationError err = deserializeJson(doc, buf);
     free(buf);
 

@@ -15,9 +15,87 @@
 | 存储 | SD 卡读写模块（SPI 接口）+ MicroSD 卡 |
 | 电池 | 德力普 12V 10800mAh 可充放电锂电池 |
 | 降压模块 | 12V → 5V DC-DC 降压（输出 ≥ 3A） |
-| DAC 模块 | PCM5102A 立体声 I2S DAC |
 
-> **注意**：ESP32-S3 无内置 DAC，需要外接 PCM5102A（或 UDA1334A）将 I2S 信号转为模拟音频后送入 ZK-502C。
+---
+
+## 🤔 常见问题：必须要 DAC 模块吗？
+
+**短答案：不一定需要买模块，但必须有某种方法把数字信号转为模拟信号。**
+
+### 为什么需要转换？
+
+| 设备 | 音频接口类型 |
+|------|------------|
+| ESP32-S3 | **只有数字输出**（I2S）；与原版 ESP32 不同，S3 没有内置 DAC |
+| ZK-502C（TPA3116D2）| **只接受模拟输入**（AUX 3.5mm 口或板载蓝牙） |
+
+两者之间存在"数字↔模拟"的鸿沟，必须跨越它。
+
+> **关于 ZK-502C 的蓝牙：** 该模块使用经典蓝牙（A2DP），而 ESP32-S3 只有蓝牙 LE，两者不兼容，无法用蓝牙绕过。
+
+---
+
+### 两种方案对比
+
+| | 方案 A（推荐）| 方案 B（无模块）|
+|-|-------------|----------------|
+| **原理** | I2S 数字信号 → PCM5102A DAC → 模拟输出 | I2S PDM-TX 数字信号 → RC 低通滤波 → 模拟输出 |
+| **额外器件** | PCM5102A 模块（约 ¥15–25）| 1kΩ 电阻 ×2 + 10nF 电容 ×2（约 ¥0.5）|
+| **音质** | 优（SNR >100dB，立体声）| 良（底噪略高，单声道）|
+| **接线复杂度** | 简单（3 根信号线）| 简单（1 根信号线 + RC 滤波器）|
+| **固件修改** | 无需（默认）| 修改 `config.h` 一行 |
+| **适合场景** | 追求音质、已有模块 | 手边无模块、想快速验证 |
+
+---
+
+### 方案 A：PCM5102A I2S DAC（推荐）
+
+这是默认方案，固件无需修改。
+
+**接线：**
+
+| PCM5102A 引脚 | ESP32-S3 GPIO |
+|-------------|--------------|
+| BCK (BCLK)  | GPIO 15      |
+| LCK (LRCK)  | GPIO 16      |
+| DIN (DATA)  | GPIO 17      |
+| VCC         | 3.3V         |
+| GND         | GND          |
+| FLT         | GND          |
+| DEMP        | GND          |
+| XSMT        | 3.3V（静音控制，高电平 = 工作）|
+| FMT         | GND          |
+
+PCM5102A 的 LOUT/ROUT → ZK-502C 的 L-IN/R-IN。
+
+---
+
+### 方案 B：PDM 输出 + RC 低通滤波（无需 DAC 模块）
+
+只需 **2 个电阻 + 2 个电容**（共约 ¥0.5），ESP32-S3 GPIO 14 直接驱动滤波器后送入 ZK-502C AUX。
+
+**修改 `config.h`（只改一行）：**
+
+```cpp
+#define AUDIO_MODE  AUDIO_MODE_PDM   // 将默认的 AUDIO_MODE_I2S_DAC 改为此行
+```
+
+**硬件电路（2 级 RC 低通滤波器）：**
+
+```
+ESP32-S3
+GPIO 14 ──┤ R1 1kΩ ├──┬──┤ R2 1kΩ ├──┬── ZK-502C L-IN
+                       │              │   （同时接 R-IN，双声道播相同内容）
+                      C1             C2
+                     10nF           10nF
+                       │              │
+                      GND            GND
+```
+
+截止频率 ≈ 1/(2π × 1kΩ × 10nF) ≈ **16kHz**（足以覆盖人耳听觉范围）。
+
+> **注意**：PDM 方案输出为单声道，L-IN 和 R-IN 接同一信号，
+> 喇叭仍然各自独立工作（左右声道内容相同）。
 
 ---
 
@@ -58,21 +136,29 @@
 
 > 将 PN532 模块上的拨码开关设为 **I2C 模式**（SW1=0, SW2=0）。
 
-### PCM5102A DAC（I2S → ZK-502C）
+### 音频输出引脚（二选一）
+
+**方案 A：PCM5102A DAC（`AUDIO_MODE_I2S_DAC`，默认）**
 
 | PCM5102A 引脚 | ESP32-S3 GPIO |
 |-------------|--------------|
 | BCK (BCLK)  | GPIO 15      |
 | LCK (LRCK)  | GPIO 16      |
 | DIN (DATA)  | GPIO 17      |
+| FLT / DEMP / FMT | GND   |
+| XSMT        | 3.3V         |
 | VCC         | 3.3V         |
 | GND         | GND          |
-| FLT         | GND          |
-| DEMP        | GND          |
-| XSMT        | 3.3V（静音控制，高电平=工作）|
-| FMT         | GND          |
 
 PCM5102A 的 LOUT/ROUT 接 ZK-502C 的 L-IN/R-IN。
+
+**方案 B：PDM + RC 滤波（`AUDIO_MODE_PDM`，无需模块）**
+
+| 信号 | ESP32-S3 GPIO |
+|------|--------------|
+| PDM 数据输出 | GPIO 14 |
+
+GPIO 14 经 2 级 RC 滤波（详见上方电路图）后接 ZK-502C AUX 输入。
 
 ### ZK-502C 功放供电与连接
 
@@ -80,7 +166,7 @@ PCM5102A 的 LOUT/ROUT 接 ZK-502C 的 L-IN/R-IN。
 |------------|---------|
 | VCC（12V）  | 12V 电池正极 |
 | GND         | 公共地  |
-| L-IN / R-IN | PCM5102A LOUT / ROUT |
+| L-IN / R-IN | PCM5102A LOUT/ROUT（方案 A）或 PDM 滤波输出（方案 B）|
 | L+ L−       | 全频喇叭（4Ω 10W）|
 | R+ R−       | 全频喇叭（4Ω 10W）|
 
@@ -93,7 +179,8 @@ PCM5102A 的 LOUT/ROUT 接 ZK-502C 的 L-IN/R-IN。
            └──→ 12V→5V 降压模块 VIN
                      │
                      └──→ 5V 输出 ──→ ESP32-S3 5V 引脚（USB 口或 5V 排针）
-                                    └──→ PCM5102A / PN532 / SD 卡模块（3.3V 由 ESP32 板载 LDO 提供）
+                                    ├──→ PCM5102A（方案 A，3.3V 由 ESP32 板载 LDO 提供）
+                                    └──→ PN532 / SD 卡模块（3.3V 由 ESP32 板载 LDO 提供）
 ```
 
 ---
@@ -106,7 +193,7 @@ PCM5102A 的 LOUT/ROUT 接 ZK-502C 的 L-IN/R-IN。
 |------|------|
 | `TFT_eSPI` | GC9A01 显示屏驱动 |
 | `Adafruit PN532` | PN532 NFC 读卡 |
-| `ESP32-audioI2S` | I2S 音频播放（MP3/WAV/FLAC） |
+| `ESP8266Audio` | I2S/PDM 音频播放（MP3/WAV/FLAC）|
 | `ArduinoJson` | JSON 配置文件解析 |
 
 ### TFT_eSPI 配置
