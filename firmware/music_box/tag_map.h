@@ -51,8 +51,10 @@ bool tags_load() {
         if (!idVal) continue;
         strncpy(s.id, idVal, sizeof(s.id) - 1);
 
-        strncpy(s.title,  kv.value()["title"]  | "未知歌曲", sizeof(s.title) - 1);
-        strncpy(s.artist, kv.value()["artist"] | "未知歌手", sizeof(s.artist) - 1);
+        const char *titleVal  = kv.value()["title"].as<const char*>();
+        const char *artistVal = kv.value()["artist"].as<const char*>();
+        strncpy(s.title,  titleVal  ? titleVal  : "未知歌曲", sizeof(s.title)  - 1);
+        strncpy(s.artist, artistVal ? artistVal : "未知歌手", sizeof(s.artist) - 1);
         s.uid[sizeof(s.uid)-1]       = '\0';
         s.id[sizeof(s.id)-1]         = '\0';
         s.title[sizeof(s.title)-1]   = '\0';

@@ -42,7 +42,11 @@
 // ---------- 功能按键 ----------
 #define PIN_BTN_PREV  21   // 上一首
 #define PIN_BTN_NEXT  47   // 下一首
-#define PIN_BTN_PLAY  48   // 播放/暂停
+#define PIN_BTN_PLAY  48   // 播放/暂停（长按 BT_LONGPRESS_MS → 切换蓝牙模式）
+
+// ---------- 电池电压 ADC ----------
+// 接线：12V 电池 → R1(220kΩ) → 此引脚 → R2(47kΩ) → GND
+#define PIN_BATT_ADC   7   // GPIO7，ADC1_CH6
 
 // ---------- 状态 LED（可选，WS2812B 或普通 LED） ----------
 #define PIN_STATUS_LED 38

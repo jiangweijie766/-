@@ -27,15 +27,14 @@
 #define AUDIO_SAMPLE_RATE  44100    // 采样率 (Hz)
 
 // ---------- NFC ----------
-#define NFC_POLL_INTERVAL_MS  300   // NFC 轮询间隔（ms）
-#define NFC_DEBOUNCE_MS      1500   // 同一标签再次触发的冷却时间（ms）
-#define NFC_UID_MAX_LEN          7  // UID 最大字节数（ISO14443A 最长 7 字节）
+#define NFC_POLL_INTERVAL_MS  300UL  // NFC 轮询间隔（ms）
+#define NFC_DEBOUNCE_MS      1500UL  // 同一标签再次触发的冷却时间（ms）
+#define NFC_UID_MAX_LEN          7   // UID 最大字节数（ISO14443A 最长 7 字节）
 
 // ---------- 显示屏 ----------
 #define TFT_BG_COLOR       0x0000   // 背景色（黑）
 #define TFT_TEXT_COLOR     0xFFFF   // 文字色（白）
 #define TFT_ACCENT_COLOR   0xF800   // 强调色（红）
-#define TFT_ANIM_FPS           30   // 动画帧率
 
 // ---------- SD 卡 ----------
 #define SD_MUSIC_DIR     "/music"   // 音乐文件夹
@@ -53,3 +52,31 @@
 
 // ---------- JSON 文档 ----------
 #define JSON_DOC_SIZE_TAGS  4096     // tags.json 解析缓冲（字节）；若标签超过 ~50 条请调大
+
+// ---------- 电池监测 ----------
+// 接线：12V 电池 → R1(220kΩ) → PIN_BATT_ADC → R2(47kΩ) → GND
+// 分压比 = 47/(220+47) ≈ 0.176  →  12V → 2.11V (在 ADC 11dB 衰减范围内)
+#define BATT_ADC_VREF_MV      3300   // ADC 满量程参考电压 (mV)
+#define BATT_R1_KOHM          220    // 分压上臂电阻 (kΩ)
+#define BATT_R2_KOHM           47    // 分压下臂电阻 (kΩ)
+#define BATT_FULL_MV         12600   // 3S 锂电池满电 (4.2V × 3)
+#define BATT_EMPTY_MV         9000   // 3S 锂电池放空 (3.0V × 3)
+#define BATT_LOW_PERCENT        20   // 低电量告警阈值 (%)
+#define BATT_UPDATE_MS       15000UL  // 电量刷新间隔 (ms)
+
+// ---------- 蓝牙模式 ----------
+// ESP32-S3 无内置经典蓝牙；蓝牙音频由 ZK-502C 板载 BT 5.0 接收器处理。
+// 固件负责切换 UI 状态并停止 I2S 输出，用户需手动将 ZK-502C 拨至 BT 挡。
+#define BT_LONGPRESS_MS       1500UL  // 长按播放键时间（ms）切换蓝牙模式
+
+// ---------- 黑胶唱片动画 ----------
+#define VINYL_CX               120   // 唱片圆心 X
+#define VINYL_CY               120   // 唱片圆心 Y
+#define VINYL_DISC_R           108   // 唱片外径（px）
+#define VINYL_LABEL_R           50   // 中心标签（专辑图）半径（px）
+#define VINYL_HOLE_R             5   // 中心孔半径（px）
+#define VINYL_DEG_PER_FRAME      6   // 每帧旋转角度（6° @ 15fps ≈ 45RPM）
+#define TFT_ANIM_FPS            15   // 动画帧率（覆盖原 30fps，留足 CPU 时间旋转像素）
+
+// ---------- 音量浮层 ----------
+#define VOL_OVERLAY_MS        2000UL  // 调节音量后浮层显示时间 (ms)
