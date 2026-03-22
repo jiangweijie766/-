@@ -174,8 +174,6 @@ pdm_audio.h
 #define VOL_OVERLAY_MS        2000UL  // 调节音量后浮层显示时间 (ms)
 ```
 
-> 注：`TFT_ANIM_FPS` 注释里提到的“覆盖原 30fps”是指早期版本的默认值，保持为 15fps 更稳。
-
 ---
 
 ### ✅ 3）music_box.ino
@@ -969,8 +967,6 @@ void display_bluetooth() {
 }
 ```
 
-> 注：`COVER_DEFAULT_COLOR_SEED` 用 `'B'` 作为默认种子，是为了在标题为空时仍能生成明显的占位色块。
-
 ---
 
 ### ✅ 5）audio_player.h
@@ -1663,7 +1659,7 @@ private:
 };
 ```
 
-> 注：`STR/XSTR` 是普通预处理宏，需要在首次使用前定义，所以放在文件顶部更清晰。
+> 注：`STR/XSTR` 是预处理宏，必须在首次使用之前定义，当前已放在文件顶部。
 
 ---
 
