@@ -31,6 +31,10 @@
 #include "pins.h"
 #include "config.h"
 
+// 辅助宏：将宏参数转为字符串（用于 Serial 打印引脚号）
+#define XSTR(x) #x
+#define STR(x)  XSTR(x)
+
 class AudioOutputPDM : public AudioOutput {
 public:
     AudioOutputPDM() : tx_handle(nullptr), g_gain(1.0f) {}
@@ -114,8 +118,4 @@ public:
 private:
     i2s_chan_handle_t tx_handle;
     float g_gain;
-
-    // 辅助宏：将宏参数转为字符串（用于 Serial 打印引脚号）
-    #define XSTR(x) #x
-    #define STR(x)  XSTR(x)
 };
