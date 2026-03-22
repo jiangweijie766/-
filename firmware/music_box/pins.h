@@ -13,6 +13,9 @@
 #define PIN_TFT_DC     9
 #define PIN_TFT_RST    8
 #define PIN_TFT_BL    46   // 背光控制（HIGH = 开启）
+// 注：部分 6Pin GC9A01 模块仅引出 VCC/GND/SCL/SDA/DC/RST，背光已接 VCC。
+//     · CS 若只留在板背焊盘，请飞线到 PIN_TFT_CS（与 SD 共总线必须有独立 CS）。
+//     · 若模块无 BL 引脚，可将 PIN_TFT_BL 悬空（屏幕默认常亮）。
 
 // ---------- SD 卡模块（SPI，与 TFT 共享总线） ----------
 #define PIN_SD_MOSI   11   // 共享

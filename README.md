@@ -130,6 +130,19 @@ GPIO 14 ──┤ R1 1kΩ ├──┬──┤ R2 1kΩ ├──┬── ZK-50
 | VCC     | 3.3V         |
 | GND     | GND          |
 
+> **如果买到 6Pin/省略背光的 GC9A01 模块**：常见只引出 `VCC / GND / SCL / SDA / DC / RST (+CS 焊盘)`，背光已焊死到 VCC。请按下表接线，确保仍然有 **独立 CS**，否则与同总线的 SD 卡会互相干扰。
+>
+>| 屏幕丝印 | 连接到 ESP32-S3 |
+>|----------|----------------|
+>| VCC      | 3.3V（不要接 5V）|
+>| GND      | GND |
+>| SCL / CLK| GPIO 12（SCLK）|
+>| SDA / DIN| GPIO 11（MOSI）|
+>| DC / D/C | GPIO 9 |
+>| RES / RST| GPIO 8 |
+>| CS / SS  | GPIO 10（若仅有背面焊盘，请飞线引出；若被固定为低电平，会与 SD 卡冲突）|
+>| BL / LED | 若无此引脚可留空；如有则接 GPIO 46（或直接 3.3V 常亮）|
+
 ### SD 卡模块（SPI，与屏幕共享总线）
 
 | SD 引脚 | ESP32-S3 GPIO |
