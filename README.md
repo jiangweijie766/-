@@ -143,6 +143,20 @@ GPIO 14 ──┤ R1 1kΩ ├──┬──┤ R2 1kΩ ├──┬── ZK-50
 >| CS / SS  | GPIO 10（若仅有背面焊盘，请飞线引出；若被固定为低电平，会与 SD 卡冲突）|
 >| BL / LED | 若无此引脚可留空，ESP32 侧 GPIO 46 也可以悬空；如有则接 GPIO 46（或直接 3.3V 常亮）|
 
+> **如果买到 12Pin GC9A01 模块（如下图丝印）**：典型引脚顺序为 `GND / LEDK / LEDA / VDD / GND / GND / D/C / CS / SCL / SDA / RESET / GND`。接线示例：
+>
+>| 屏幕丝印 | 连接到 ESP32-S3 | 说明 |
+>|----------|----------------|------|
+>| VDD      | 3.3V           | 仅接 3.3V，勿接 5V |
+>| LEDA     | 3.3V           | 背光正极，可直接 3.3V 或串电阻/三极管做调光 |
+>| LEDK     | GPIO 46（BL）或 GND | 背光负极，接 BL 可控亮灭；也可直接接 GND 常亮 |
+>| SCL      | GPIO 12（SCLK）| SPI 时钟 |
+>| SDA      | GPIO 11（MOSI）| SPI 数据 |
+>| D/C      | GPIO 9         | 数据/命令 |
+>| CS       | GPIO 10        | 独立片选，避免与 SD 总线冲突 |
+>| RESET    | GPIO 8         | 复位 |
+>| GND×3    | GND            | 多个地脚任选其一，推荐都接地 |
+
 ### SD 卡模块（SPI，与屏幕共享总线）
 
 | SD 引脚 | ESP32-S3 GPIO |
