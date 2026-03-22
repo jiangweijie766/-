@@ -53,17 +53,6 @@
 // ---------- JSON 文档 ----------
 #define JSON_DOC_SIZE_TAGS  4096     // tags.json 解析缓冲（字节）；若标签超过 ~50 条请调大
 
-// ---------- 电池监测 ----------
-// 接线：12V 电池 → R1(220kΩ) → PIN_BATT_ADC → R2(47kΩ) → GND
-// 分压比 = 47/(220+47) ≈ 0.176  →  12V → 2.11V (在 ADC 11dB 衰减范围内)
-#define BATT_ADC_VREF_MV      3300   // ADC 满量程参考电压 (mV)
-#define BATT_R1_KOHM          220    // 分压上臂电阻 (kΩ)
-#define BATT_R2_KOHM           47    // 分压下臂电阻 (kΩ)
-#define BATT_FULL_MV         12600   // 3S 锂电池满电 (4.2V × 3)
-#define BATT_EMPTY_MV         9000   // 3S 锂电池放空 (3.0V × 3)
-#define BATT_LOW_PERCENT        20   // 低电量告警阈值 (%)
-#define BATT_UPDATE_MS       15000UL  // 电量刷新间隔 (ms)
-
 // ---------- 蓝牙模式 ----------
 // ESP32-S3 无内置经典蓝牙；蓝牙音频由 ZK-502C 板载 BT 5.0 接收器处理。
 // 固件负责切换 UI 状态并停止 I2S 输出，用户需手动将 ZK-502C 拨至 BT 挡。

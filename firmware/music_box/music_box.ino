@@ -10,7 +10,7 @@
  *   - SD 卡读写模块（SPI）
  *   - 德力普 12V 10800mAh 锂电池 + 12V→5V 降压模块
  *   - 高音喇叭 4Ω 11W × 2，全频喇叭 4Ω 10W × 2
- *   - 电池分压电阻：R1=220kΩ, R2=47kΩ → GPIO7
+ *   - 外接 12V 电量指示模块（直接并联在电池正负极，无需接 ESP32）
  *
  * 依赖库（Arduino IDE 库管理器安装）：
  *   - TFT_eSPI              (GC9A01 显示)
@@ -24,15 +24,13 @@
  *   · SD 卡顺序播放（上/下一首，播放/暂停）
  *   · 旋转编码器调节音量（屏幕浮层显示）
  *   · 黑胶唱片旋转动画 + 专辑封面（BMP）
- *   · 电池电量显示 + 低电量告警（< 20%）
  *   · 蓝牙模式（长按播放键切换；音频由 ZK-502C 板载 BT 接收）
  */
 
 #include <Arduino.h>
 #include "pins.h"
 #include "config.h"
-#include "sd_card.h"      // 必须在 battery.h / display.h 之前（BMP 加载函数）
-#include "battery.h"      // 必须在 display.h 之前（display_idle 引用 g_battPct）
+#include "sd_card.h"
 #include "display.h"
 #include "audio_player.h"
 #include "nfc_reader.h"
@@ -62,9 +60,6 @@ static int  g_musicIndex = 0;
 static int           g_vinylAngle    = 0;
 static unsigned long g_lastAnimFrame = 0;
 
-// ——— 低电量告警（每次电量更新仅告警一次）———
-static bool g_lowBattAlerted = false;
-
 // ——— 按键去抖 ———
 static unsigned long g_lastBtnPrev = 0;
 static unsigned long g_lastBtnNext = 0;
@@ -80,9 +75,6 @@ static char          g_lastNfcUid[24] = "";
 
 // ——— 旋转编码器（音量）———
 static int g_encLastA = HIGH;
-
-// ——— 定时器 ———
-static unsigned long g_lastBattUpdate = 0;
 
 // ——— 前向声明 ———
 void on_nfc_detected(const char *uidStr);
@@ -108,11 +100,6 @@ void setup() {
     pinMode(PIN_ENC_A, INPUT_PULLUP);
     pinMode(PIN_ENC_B, INPUT_PULLUP);
     pinMode(PIN_ENC_BTN, INPUT_PULLUP);
-
-    // 电池 ADC
-    battery_init();
-    battery_update();               // 启动时立刻读一次
-    g_lastBattUpdate = millis();
 
     // 初始化显示屏
     display_init();
@@ -151,30 +138,6 @@ void setup() {
 // ============================================================
 void loop() {
     unsigned long now = millis();
-
-    // —— 电量定时刷新 ——
-    if (now - g_lastBattUpdate >= BATT_UPDATE_MS) {
-        g_lastBattUpdate = now;
-        battery_update();
-
-        // 低电量首次告警（STATE_PLAYING / IDLE 下均提示）
-        if (battery_is_low() && !g_lowBattAlerted && g_state != STATE_BT_MODE) {
-            g_lowBattAlerted = true;
-            display_battery_warning(battery_get_pct());
-            // 告警后恢复当前界面
-            if (g_state == STATE_PLAYING) {
-                display_vinyl_frame(g_vinylAngle, battery_get_pct(), false);
-            } else if (g_state == STATE_PAUSED) {
-                display_vinyl_frame(g_vinylAngle, battery_get_pct(), true);
-            } else if (g_state == STATE_BT_MODE) {
-                display_bluetooth(battery_get_pct());
-            } else {
-                display_idle();
-            }
-        }
-        // 电量回升后重置告警标志
-        if (!battery_is_low()) g_lowBattAlerted = false;
-    }
 
     // —— 音频驱动（必须频繁调用）——
     if (g_state == STATE_PLAYING) {
@@ -258,8 +221,7 @@ void loop() {
         if (g_state == STATE_PLAYING) {
             g_vinylAngle = (g_vinylAngle + VINYL_DEG_PER_FRAME) % 360;
         }
-        display_vinyl_frame(g_vinylAngle, battery_get_pct(),
-                            g_state == STATE_PAUSED);
+        display_vinyl_frame(g_vinylAngle, g_state == STATE_PAUSED);
     }
 }
 
@@ -303,7 +265,7 @@ void on_btn_playpause() {
         audio_pause();
         g_state = STATE_PAUSED;
         Serial.println("[Btn] 已暂停");
-        display_vinyl_frame(g_vinylAngle, battery_get_pct(), true);
+        display_vinyl_frame(g_vinylAngle, true);
 
     } else if (g_state == STATE_PAUSED && g_currentPath[0] != '\0') {
         // → 断点续播
@@ -333,7 +295,7 @@ void on_btn_bt_toggle() {
         }
         g_state = STATE_BT_MODE;
         Serial.println("[BT] 进入蓝牙模式 — ZK-502C 请拨至 BT 挡");
-        display_bluetooth(battery_get_pct());
+        display_bluetooth();
     }
 }
 

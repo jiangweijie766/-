@@ -18,7 +18,6 @@
 //    · display_vinyl_frame()        黑胶唱片旋转帧（主循环调用）
 //    · display_vinyl_free()         释放专辑图内存
 //    · display_bluetooth()          蓝牙模式界面
-//    · display_battery_warning()    低电量告警
 // ============================================================
 
 static TFT_eSPI tft = TFT_eSPI();
@@ -50,35 +49,6 @@ static void _spr_ensure() {
         g_spr.createSprite(240, 240);   // 自动使用 PSRAM（若可用）
         g_sprCreated = true;
     }
-}
-
-// ============================================================
-//  内部辅助：在精灵上绘制电池图标
-//  x,y = 图标左上角；percent = 0–100
-// ============================================================
-static void _draw_battery(TFT_eSprite &spr, int x, int y, int pct) {
-    // 颜色
-    uint16_t col = (pct > 50) ? 0x07E0 :    // 绿
-                   (pct > 20) ? 0xFFE0 :    // 黄
-                                0xF800;     // 红
-
-    int bw = 26, bh = 12;    // 电池外框尺寸
-    int bumpW = 3, bumpH = 6; // 正极凸起
-
-    // 外框
-    spr.drawRect(x, y, bw, bh, 0xCE79);
-    // 正极凸起
-    spr.fillRect(x + bw, y + (bh - bumpH) / 2, bumpW, bumpH, 0xCE79);
-    // 电量填充（内缩 2px）
-    int fill = (int)((pct * (bw - 4)) / 100);
-    if (fill > 0) spr.fillRect(x + 2, y + 2, fill, bh - 4, col);
-    // 百分比文字
-    char buf[8];
-    snprintf(buf, sizeof(buf), "%d%%", pct);
-    spr.setTextDatum(ML_DATUM);
-    spr.setTextColor(0xCE79, TFT_BLACK);
-    spr.setTextSize(1);
-    spr.drawString(buf, x + bw + bumpW + 3, y + bh / 2);
 }
 
 // ——— 无封面时占位色块的默认色种子（ASCII 'B'，确保无标题时仍生成有颜色的扇区）———
@@ -293,9 +263,6 @@ void display_idle() {
     g_spr.drawString("请刷 NFC 标签选歌", 120, 170);
     g_spr.drawString("或按 ▶ 播放 SD 列表", 120, 184);
 
-    // 电量（顶部；battery.h 须在 display.h 之前被 include）
-    _draw_battery(g_spr, 88, 12, battery_get_pct());
-
     g_spr.pushSprite(0, 0);
 }
 
@@ -355,18 +322,14 @@ void display_vinyl_setup(const char *title, const char *artist,
 // ============================================================
 //  公共 API：黑胶唱片旋转帧（主循环每帧调用）
 //  angle    = 当前旋转角度 (0–359)
-//  battPct  = 电量百分比
 //  paused   = 是否暂停
 // ============================================================
-void display_vinyl_frame(int angle, int battPct, bool paused) {
+void display_vinyl_frame(int angle, bool paused) {
     _spr_ensure();
     g_spr.fillSprite(TFT_BLACK);
 
     // 绘制唱片（含封面旋转）
     _draw_vinyl_disc(g_spr, angle);
-
-    // 电量（顶部中央，在圆弧上方区域）
-    _draw_battery(g_spr, 88, 10, battPct);
 
     // 歌曲信息（底部）
     _draw_song_info(g_spr, paused);
@@ -404,7 +367,7 @@ void display_trigger_volume_overlay(int vol) {
 // ============================================================
 //  公共 API：蓝牙模式界面
 // ============================================================
-void display_bluetooth(int battPct) {
+void display_bluetooth() {
     _spr_ensure();
     g_spr.fillSprite(TFT_BLACK);
 
@@ -438,39 +401,5 @@ void display_bluetooth(int battPct) {
     g_spr.setTextColor(0x7BEF, TFT_BLACK);
     g_spr.drawString("长按 ▶ 退出蓝牙模式", 120, 212);
 
-    // 电量
-    _draw_battery(g_spr, 88, 10, battPct);
-
     g_spr.pushSprite(0, 0);
-}
-
-// ============================================================
-//  公共 API：低电量告警（全屏红色警告，短暂显示）
-// ============================================================
-void display_battery_warning(int pct) {
-    _spr_ensure();
-    g_spr.fillSprite(TFT_BLACK);
-    g_spr.drawCircle(120, 120, 108, 0xF800);
-    g_spr.drawCircle(120, 120, 104, 0xF800);
-
-    g_spr.setTextDatum(MC_DATUM);
-    g_spr.setTextColor(0xF800, TFT_BLACK);
-    g_spr.setTextSize(3);
-    g_spr.drawString("!", 120, 88);
-
-    g_spr.setTextSize(2);
-    g_spr.drawString("低电量", 120, 120);
-
-    char buf[16];
-    snprintf(buf, sizeof(buf), "%d%%", pct);
-    g_spr.setTextSize(3);
-    g_spr.setTextColor(0xFFE0, TFT_BLACK);
-    g_spr.drawString(buf, 120, 152);
-
-    g_spr.setTextSize(1);
-    g_spr.setTextColor(0xCE79, TFT_BLACK);
-    g_spr.drawString("请尽快充电", 120, 180);
-
-    g_spr.pushSprite(0, 0);
-    delay(2500);
 }
